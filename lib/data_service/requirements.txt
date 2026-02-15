@@ -1,0 +1,16 @@
+# ======================================================
+# Forward AI — Python Data Analysis Service Dependencies
+# ======================================================
+# Flask:          Lightweight WSGI web framework
+# flask-cors:     Cross-Origin Resource Sharing support
+# requests:       HTTP library for Adzuna API calls
+# keybert:        Keyword extraction using BERT embeddings
+# beautifulsoup4: HTML parsing for cleaning job descriptions
+# gunicorn:       Production-grade WSGI HTTP server
+
+flask==3.1.0
+flask-cors==5.0.1
+requests==2.32.3
+keybert==0.8.5
+beautifulsoup4==4.12.3
+gunicorn==23.0.0
