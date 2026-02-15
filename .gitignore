@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Backend — Node.js
+lib/backend/node_modules/
+lib/backend/.env
+lib/backend/package-lock.json
+
+# Backend — Python Data Service
+lib/data_service/venv/
+lib/data_service/__pycache__/
+*.pyc
+
+# Environment files (keep .env.example tracked)
+.env
+!.env.example
