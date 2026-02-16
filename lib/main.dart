@@ -25,6 +25,7 @@ import 'package:provider/provider.dart';
 
 import 'config/theme.dart';
 import 'providers/analysis_provider.dart';
+import 'providers/personality_provider.dart';
 import 'screens/home_screen.dart';
 
 /// Application entry point.
@@ -74,14 +75,14 @@ class ForwardAIApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       // --- Provider Registration ---
-      // All providers are created here and available to the entire widget tree.
-      // Add new providers here as the app grows (e.g., AuthProvider, ThemeProvider).
       providers: [
         // AnalysisProvider: Manages the career analysis state machine.
-        // Using ChangeNotifierProvider creates the provider lazily and
-        // automatically disposes it when the widget tree is torn down.
         ChangeNotifierProvider(
           create: (_) => AnalysisProvider(),
+        ),
+        // PersonalityProvider: Manages the personality quiz flow.
+        ChangeNotifierProvider(
+          create: (_) => PersonalityProvider(),
         ),
       ],
 

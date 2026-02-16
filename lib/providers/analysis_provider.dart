@@ -17,6 +17,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/analysis_result.dart';
 import '../services/api_service.dart';
+import '../data/mock_data.dart';
 
 /// Enum representing the possible states of the analysis flow.
 ///
@@ -151,6 +152,31 @@ class AnalysisProvider extends ChangeNotifier {
     }
 
     // Notify all listening widgets to rebuild with the new state
+    notifyListeners();
+  }
+
+  /// Triggers a career analysis using mock data (no backend needed).
+  ///
+  /// Simulates a network delay, then returns hardcoded results.
+  /// This is the MVP mode — swap to [analyzeCareer] when APIs are ready.
+  Future<void> analyzeCareerWithMockData({
+    required String jobTitle,
+    required List<String> userSkills,
+  }) async {
+    _state = AnalysisState.loading;
+    _errorMessage = '';
+    _result = null;
+    notifyListeners();
+
+    // Simulate network delay for realistic feel
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    _result = getMockAnalysisResult(
+      jobTitle: jobTitle,
+      userSkills: userSkills,
+    );
+    _state = AnalysisState.success;
+    debugPrint('✅ [AnalysisProvider] Mock analysis complete!');
     notifyListeners();
   }
 
