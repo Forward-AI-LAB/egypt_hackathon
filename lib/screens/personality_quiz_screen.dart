@@ -4,6 +4,7 @@
 /// An animated quiz experience where users answer 8 personality
 /// questions to discover their ideal software development track.
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -187,7 +188,7 @@ class PersonalityQuizScreen extends StatelessWidget {
         // Answer and advance
         provider.answerQuestion(option);
 
-        // If quiz is complete, navigate to result
+        // If quiz is complete, navigate to result (shows loading while AI processes)
         if (provider.isComplete) {
           Navigator.pushReplacement(
             context,

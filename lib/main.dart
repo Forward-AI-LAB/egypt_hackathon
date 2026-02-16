@@ -18,6 +18,7 @@
 /// Author:  Forward AI Team
 /// Version: 1.0.0 (Hackathon MVP)
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

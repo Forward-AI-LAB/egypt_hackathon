@@ -14,9 +14,11 @@
 ///   - Request/response interceptors for logging and error handling.
 ///   - Singleton pattern ensures only one Dio instance exists.
 /// ====================================================================
+library;
 
 import 'package:dio/dio.dart';
 import '../models/analysis_result.dart';
+import '../models/personality_question.dart';
 
 /// Service class that handles all API communication with the backend.
 ///
@@ -138,6 +140,61 @@ class ApiService {
       throw ApiException(_getDioErrorMessage(e));
     } catch (e) {
       // Handle any other unexpected errors
+      if (e is ApiException) rethrow;
+      print('❌ [ApiService] Unexpected error: $e');
+      throw ApiException('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  /// Sends personality quiz answers to the backend for AI-powered
+  /// track recommendation via Gemini prompt engineering.
+  ///
+  /// Args:
+  ///   [answers]     — List of maps with { question, chosenAnswer, trait }.
+  ///   [traitScores] — Accumulated trait scores from the quiz.
+  ///
+  /// Returns:
+  ///   A [TrackResult] with the AI-recommended track.
+  ///
+  /// Throws:
+  ///   [ApiException] if the backend is unreachable or returns an error.
+  Future<TrackResult> evaluatePersonality({
+    required List<Map<String, String>> answers,
+    required Map<String, int> traitScores,
+  }) async {
+    try {
+      print('🧠 [ApiService] Sending personality evaluation...');
+      print('   Answers: ${answers.length}');
+      print('   Trait Scores: $traitScores');
+
+      final response = await _dio.post(
+        '/api/personality',
+        data: {
+          'answers': answers,
+          'traitScores': traitScores,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        print('✅ [ApiService] Personality evaluation complete!');
+        final data = response.data;
+        return TrackResult(
+          trackName: data['trackName'] ?? 'Frontend Development',
+          matchPercentage: data['matchPercentage'] ?? 75,
+          description: data['description'] ?? '',
+          strengths: List<String>.from(data['strengths'] ?? []),
+          emoji: data['emoji'] ?? '🎯',
+        );
+      } else {
+        final errorMsg =
+            response.data['error'] ?? 'Server returned an error.';
+        print('❌ [ApiService] Server error: $errorMsg');
+        throw ApiException(errorMsg);
+      }
+    } on DioException catch (e) {
+      print('❌ [ApiService] DioException: ${e.type} — ${e.message}');
+      throw ApiException(_getDioErrorMessage(e));
+    } catch (e) {
       if (e is ApiException) rethrow;
       print('❌ [ApiService] Unexpected error: $e');
       throw ApiException('An unexpected error occurred. Please try again.');

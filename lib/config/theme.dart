@@ -14,6 +14,7 @@
 ///   - Accent: Amber (#F59E0B) — highlights, achievements
 ///   - Background: Dark charcoal (#0F172A) — modern, premium feel
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

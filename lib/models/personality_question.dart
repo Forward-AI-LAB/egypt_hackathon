@@ -1,6 +1,7 @@
 /// ====================================================================
 /// Forward AI — Personality Quiz Data Models
 /// ====================================================================
+library;
 
 /// A single option within a personality question.
 class QuizOption {

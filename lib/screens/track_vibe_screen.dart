@@ -4,6 +4,7 @@
 /// A premium static showcase screen for the Frontend Development track.
 /// Shows the "vibe" — tools, day-in-the-life, salary, projects, traits.
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,11 +13,16 @@ import '../config/theme.dart';
 import '../data/mock_data.dart';
 
 class TrackVibeScreen extends StatelessWidget {
-  const TrackVibeScreen({super.key});
+  /// The name of the track to display (e.g., "Backend Development").
+  /// Defaults to "Frontend Development" if not provided or not found.
+  final String trackName;
+
+  const TrackVibeScreen({super.key, this.trackName = 'Frontend Development'});
 
   @override
   Widget build(BuildContext context) {
-    final track = frontendTrackInfo;
+    // Look up track data from the allTracks map, fallback to frontend
+    final track = allTracks[trackName] ?? frontendTrackInfo;
 
     return Scaffold(
       body: Container(

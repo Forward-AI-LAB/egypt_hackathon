@@ -11,6 +11,7 @@
 /// This separation of data models from business logic follows the
 /// Clean Architecture principle, making the codebase scalable.
 /// ====================================================================
+library;
 
 /// Represents a single week in the personalized learning roadmap.
 ///

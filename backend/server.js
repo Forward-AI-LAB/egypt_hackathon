@@ -401,7 +401,275 @@ Generate the roadmap now:`;
 }
 
 // ---------------------------------------------------------------------------
-// 5. CONTROLLER — AnalyzeController
+// 5. SERVICE LAYER — PersonalityService
+// ---------------------------------------------------------------------------
+// This service uses Gemini AI to analyze personality quiz answers and
+// recommend the best-fit software development track.
+
+class PersonalityService {
+    /**
+     * Available software development tracks.
+     * Each track has traits that map to it, used for both AI prompting
+     * and local fallback scoring.
+     */
+    static TRACKS = [
+        {
+            name: "Frontend Development",
+            emoji: "🎨",
+            traits: ["visual", "creative", "detail"],
+            description: "Building beautiful, interactive user interfaces",
+        },
+        {
+            name: "Backend Development",
+            emoji: "⚙️",
+            traits: ["analytical", "detail", "systematic"],
+            description: "Designing robust server-side systems and APIs",
+        },
+        {
+            name: "Mobile Development",
+            emoji: "📱",
+            traits: ["creative", "visual", "analytical"],
+            description: "Creating native and cross-platform mobile apps",
+        },
+        {
+            name: "Data Science",
+            emoji: "📊",
+            traits: ["analytical", "systematic", "curious"],
+            description: "Extracting insights from data using ML and statistics",
+        },
+        {
+            name: "DevOps Engineering",
+            emoji: "🔧",
+            traits: ["systematic", "analytical", "collaborative"],
+            description: "Automating infrastructure and deployment pipelines",
+        },
+        {
+            name: "UI/UX Design",
+            emoji: "✏️",
+            traits: ["visual", "creative", "collaborative"],
+            description: "Designing user-centered digital experiences",
+        },
+    ];
+
+    /**
+     * Creates a new PersonalityService.
+     * @param {GeminiService} geminiService - The Gemini service for AI calls.
+     */
+    constructor(geminiService) {
+        this.geminiService = geminiService;
+    }
+
+    /**
+     * Analyzes quiz answers using Gemini AI prompt engineering to
+     * recommend the best software development track.
+     *
+     * @param {Object[]} answers - Array of { question, chosenAnswer, trait } objects.
+     * @param {Object}   traitScores - Map of trait name → accumulated score.
+     * @returns {Promise<Object>} Track recommendation with match %, description, strengths.
+     */
+    async analyzePersonality(answers, traitScores) {
+        console.log(`\n🧠 [PersonalityService] Analyzing personality...`);
+        console.log(`   Answers: ${answers.length}`);
+        console.log(`   Trait scores: ${JSON.stringify(traitScores)}`);
+
+        // Try AI-powered analysis first
+        if (this.geminiService.model) {
+            try {
+                return await this._analyzeWithGemini(answers, traitScores);
+            } catch (error) {
+                console.error(
+                    `❌ [PersonalityService] Gemini analysis failed: ${error.message}`
+                );
+                console.log(`📦 [PersonalityService] Falling back to local scoring.`);
+            }
+        }
+
+        // Fallback: local trait-based scoring
+        return this._analyzeLocally(traitScores);
+    }
+
+    /**
+     * Uses Gemini AI with a carefully engineered prompt to recommend a track.
+     * @private
+     */
+    async _analyzeWithGemini(answers, traitScores) {
+        const trackDescriptions = PersonalityService.TRACKS.map(
+            (t) => `- ${t.name} (${t.emoji}): ${t.description}. Key traits: ${t.traits.join(", ")}`
+        ).join("\n");
+
+        const answersFormatted = answers
+            .map((a, i) => `Q${i + 1}: "${a.question}" → Answer: "${a.chosenAnswer}" (trait: ${a.trait})`)
+            .join("\n");
+
+        const traitSummary = Object.entries(traitScores)
+            .sort(([, a], [, b]) => b - a)
+            .map(([trait, score]) => `${trait}: ${score}`)
+            .join(", ");
+
+        // -----------------------------------------------------------------------
+        // Prompt Engineering — Track Recommendation
+        // -----------------------------------------------------------------------
+        const prompt = `You are an expert career counselor specializing in software development careers.
+
+A user completed a personality quiz to discover which software development track suits them best.
+
+Here are the available tracks:
+${trackDescriptions}
+
+Here are the user's quiz answers:
+${answersFormatted}
+
+Accumulated trait scores: ${traitSummary}
+
+Based on the user's answers and personality traits, determine the BEST matching software development track.
+
+CRITICAL INSTRUCTIONS:
+1. Respond with ONLY a valid JSON object. No markdown, no code fences, no explanations.
+2. The JSON must have these exact fields:
+   - "trackName" (string): Must be exactly one of: "Frontend Development", "Backend Development", "Mobile Development", "Data Science", "DevOps Engineering", "UI/UX Design"
+   - "emoji" (string): The emoji for the chosen track
+   - "matchPercentage" (number): A percentage between 65 and 97 indicating how well the user fits this track
+   - "description" (string): A 2-3 sentence personalized explanation of WHY this track is perfect for this specific user, referencing their actual answers and traits
+   - "strengths" (string array): Exactly 3 specific strengths this user has that align with the recommended track, based on their quiz answers
+3. Be thoughtful and analytical. Don't just pick the track with the highest trait overlap — consider the COMBINATION and PATTERN of answers.
+4. The description should feel personal and specific to THIS user's answers, not generic.
+5. Only output the JSON object, nothing else.
+
+Analyze and respond now:`;
+
+        const result = await this.geminiService.model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        console.log(
+            `📝 [PersonalityService] Raw Gemini response (${text.length} chars).`
+        );
+
+        // Parse the response (reuse Gemini parsing logic for robustness)
+        const parsed = this._parseResponse(text);
+
+        // Validate the response has required fields
+        if (!parsed.trackName || !parsed.matchPercentage || !parsed.strengths) {
+            throw new Error("Gemini response missing required fields.");
+        }
+
+        // Validate trackName is one of the known tracks
+        const validTrackNames = PersonalityService.TRACKS.map((t) => t.name);
+        if (!validTrackNames.includes(parsed.trackName)) {
+            console.warn(
+                `⚠️ [PersonalityService] Unknown track "${parsed.trackName}", correcting...`
+            );
+            // Find the closest match
+            const closest = validTrackNames.find((n) =>
+                n.toLowerCase().includes(parsed.trackName.toLowerCase().split(" ")[0])
+            );
+            if (closest) {
+                parsed.trackName = closest;
+                parsed.emoji = PersonalityService.TRACKS.find((t) => t.name === closest).emoji;
+            }
+        }
+
+        console.log(`✅ [PersonalityService] AI recommends: ${parsed.trackName} (${parsed.matchPercentage}%)`);
+        return parsed;
+    }
+
+    /**
+     * Parses Gemini's text response into a JSON object.
+     * Handles markdown fences and other edge cases.
+     * @private
+     */
+    _parseResponse(text) {
+        // Attempt 1: Direct parse
+        try {
+            return JSON.parse(text);
+        } catch (e) { /* continue */ }
+
+        // Attempt 2: Strip markdown fences
+        let cleaned = text
+            .replace(/```json\s*/gi, "")
+            .replace(/```\s*/g, "")
+            .trim();
+        try {
+            return JSON.parse(cleaned);
+        } catch (e) { /* continue */ }
+
+        // Attempt 3: Extract JSON object substring
+        const firstBrace = text.indexOf("{");
+        const lastBrace = text.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            try {
+                return JSON.parse(text.substring(firstBrace, lastBrace + 1));
+            } catch (e) { /* continue */ }
+        }
+
+        throw new Error("Failed to parse Gemini personality response as JSON.");
+    }
+
+    /**
+     * Local fallback: scores each track based on trait overlap.
+     * Used when Gemini is unavailable.
+     * @private
+     */
+    _analyzeLocally(traitScores) {
+        console.log(`📦 [PersonalityService] Using local trait-based scoring.`);
+
+        let bestTrack = PersonalityService.TRACKS[0];
+        let bestScore = 0;
+
+        for (const track of PersonalityService.TRACKS) {
+            let score = 0;
+            for (const trait of track.traits) {
+                score += traitScores[trait] || 0;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestTrack = track;
+            }
+        }
+
+        // Calculate match percentage from score
+        const totalAnswers = Object.values(traitScores).reduce((a, b) => a + b, 0);
+        const matchPct = totalAnswers > 0
+            ? Math.min(97, Math.max(65, Math.round((bestScore / totalAnswers) * 100)))
+            : 75;
+
+        // Build strengths from top traits
+        const sortedTraits = Object.entries(traitScores)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3);
+
+        const strengthsMap = {
+            visual: "Strong visual & aesthetic sense",
+            creative: "Creative problem-solving & innovation",
+            analytical: "Logical thinking & optimization",
+            collaborative: "Team collaboration & communication",
+            detail: "Attention to detail & quality",
+            systematic: "Systematic & structured approach",
+            curious: "Intellectual curiosity & exploration",
+        };
+
+        const strengths = sortedTraits.map(
+            ([trait]) => strengthsMap[trait] || trait
+        );
+
+        const result = {
+            trackName: bestTrack.name,
+            emoji: bestTrack.emoji,
+            matchPercentage: matchPct,
+            description:
+                `Your personality aligns well with ${bestTrack.name}! ` +
+                `Your strengths in ${sortedTraits.map(([t]) => t).join(", ")} ` +
+                `are exactly what makes a great ${bestTrack.name.toLowerCase()} professional.`,
+            strengths: strengths,
+        };
+
+        console.log(`✅ [PersonalityService] Local result: ${result.trackName} (${result.matchPercentage}%)`);
+        return result;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 6. CONTROLLER — AnalyzeController
 // ---------------------------------------------------------------------------
 // The Controller orchestrates the flow between services.
 // It is the single point of coordination for the /api/analyze endpoint.
@@ -520,7 +788,101 @@ class AnalyzeController {
 }
 
 // ---------------------------------------------------------------------------
-// 6. MIDDLEWARE — Error Handler
+// 7. CONTROLLER — PersonalityController
+// ---------------------------------------------------------------------------
+// Handles the personality quiz evaluation endpoint.
+
+class PersonalityController {
+    /**
+     * @param {PersonalityService} personalityService - Service for AI personality analysis.
+     */
+    constructor(personalityService) {
+        this.personalityService = personalityService;
+        this.evaluate = this.evaluate.bind(this);
+    }
+
+    /**
+     * POST /api/personality — Personality quiz evaluation endpoint.
+     *
+     * Request Body:
+     *   {
+     *     "answers": [
+     *       { "question": "...", "chosenAnswer": "...", "trait": "visual" },
+     *       ...
+     *     ],
+     *     "traitScores": { "visual": 3, "analytical": 2, ... }
+     *   }
+     *
+     * Response:
+     *   {
+     *     "success": true,
+     *     "trackName": "Frontend Development",
+     *     "emoji": "🎨",
+     *     "matchPercentage": 89,
+     *     "description": "...",
+     *     "strengths": ["...", "...", "..."]
+     *   }
+     */
+    async evaluate(req, res, next) {
+        try {
+            const startTime = Date.now();
+
+            const { answers, traitScores } = req.body;
+
+            // Validate answers
+            if (!answers || !Array.isArray(answers) || answers.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Missing or invalid "answers". Must be a non-empty array.',
+                    example: {
+                        answers: [
+                            { question: "What catches your eye?", chosenAnswer: "The visual design", trait: "visual" },
+                        ],
+                        traitScores: { visual: 3, analytical: 2 },
+                    },
+                });
+            }
+
+            // Validate traitScores
+            if (!traitScores || typeof traitScores !== "object") {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Missing or invalid "traitScores". Must be an object.',
+                });
+            }
+
+            console.log(`\n${"=".repeat(60)}`);
+            console.log(`🧠 [PersonalityController] New personality evaluation`);
+            console.log(`   Answers: ${answers.length}`);
+            console.log(`   Traits: ${JSON.stringify(traitScores)}`);
+            console.log(`${"=".repeat(60)}\n`);
+
+            const result = await this.personalityService.analyzePersonality(
+                answers,
+                traitScores
+            );
+
+            const duration = Date.now() - startTime;
+            console.log(
+                `\n✅ [PersonalityController] Evaluation complete in ${duration}ms.\n`
+            );
+
+            return res.status(200).json({
+                success: true,
+                ...result,
+                metadata: {
+                    processing_time_ms: duration,
+                    ai_powered: !!this.personalityService.geminiService.model,
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 8. MIDDLEWARE — Error Handler
 // ---------------------------------------------------------------------------
 // Centralized error handling ensures consistent error responses across
 // all endpoints. This is a best practice for production Express apps.
@@ -568,7 +930,7 @@ function requestLogger(req, res, next) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. APPLICATION FACTORY — createApp()
+// 9. APPLICATION FACTORY — createApp()
 // ---------------------------------------------------------------------------
 // Factory pattern: Creates and configures the Express app.
 // This makes the app testable (you can create isolated instances for testing)
@@ -614,6 +976,8 @@ function createApp() {
     const skillService = new SkillAnalysisService(config.pythonServiceUrl);
     const geminiService = new GeminiService(config.geminiApiKey);
     const analyzeController = new AnalyzeController(skillService, geminiService);
+    const personalityService = new PersonalityService(geminiService);
+    const personalityController = new PersonalityController(personalityService);
 
     // --- Routes ---
 
@@ -655,6 +1019,28 @@ function createApp() {
      */
     app.post("/api/analyze", analyzeController.analyze);
 
+    /**
+     * POST /api/personality — Personality quiz evaluation endpoint.
+     *
+     * Request Body:
+     *   {
+     *     "answers": [
+     *       { "question": "...", "chosenAnswer": "...", "trait": "visual" }
+     *     ],
+     *     "traitScores": { "visual": 3, "analytical": 2 }
+     *   }
+     *
+     * Response:
+     *   {
+     *     "success": true,
+     *     "trackName": "Frontend Development",
+     *     "matchPercentage": 89,
+     *     "description": "...",
+     *     "strengths": ["...", ...]
+     *   }
+     */
+    app.post("/api/personality", personalityController.evaluate);
+
     // --- Error Handling (must be registered LAST) ---
     app.use(errorHandler);
 
@@ -662,7 +1048,7 @@ function createApp() {
 }
 
 // ---------------------------------------------------------------------------
-// 8. SERVER STARTUP
+// 10. SERVER STARTUP
 // ---------------------------------------------------------------------------
 
 const app = createApp();
@@ -678,11 +1064,12 @@ app.listen(config.port, () => {
     );
     console.log(`   📊 Health Check:    http://localhost:${config.port}/health`);
     console.log(`   🔗 Analyze API:     POST http://localhost:${config.port}/api/analyze`);
+    console.log(`   🧠 Personality API: POST http://localhost:${config.port}/api/personality`);
     console.log(`${"=".repeat(60)}\n`);
 });
 
 // ---------------------------------------------------------------------------
-// 9. GRACEFUL SHUTDOWN
+// 11. GRACEFUL SHUTDOWN
 // ---------------------------------------------------------------------------
 // Handle process termination signals to clean up resources.
 // This is important for containerized deployments (Docker/Kubernetes).

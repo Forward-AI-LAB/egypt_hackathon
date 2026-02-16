@@ -13,6 +13,7 @@
 /// State Machine:
 ///   IDLE → LOADING → SUCCESS or ERROR → IDLE (on reset)
 /// ====================================================================
+library;
 
 import 'package:flutter/foundation.dart';
 import '../models/analysis_result.dart';

@@ -1,6 +1,7 @@
 /// ====================================================================
 /// Forward AI — Track Info Data Model
 /// ====================================================================
+library;
 
 /// Represents a software development track with all its details.
 class TrackInfo {

@@ -1,5 +1,6 @@
 /// Forward AI — Basic Widget Smoke Test
 /// Verifies that the app launches without errors.
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:egypt_hackathon/main.dart';

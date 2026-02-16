@@ -12,6 +12,7 @@
 ///   - Widget decomposition — each section is a separate builder method
 ///   - Clean Architecture — no business logic in the UI layer
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';

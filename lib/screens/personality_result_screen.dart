@@ -3,7 +3,10 @@
 /// ====================================================================
 /// Shows the quiz result: recommended track, match %, strengths,
 /// and CTA buttons to explore the track vibe or start career analysis.
+///
+/// Now handles loading state while AI processes the quiz answers.
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -20,6 +23,56 @@ class PersonalityResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<PersonalityProvider>(
       builder: (context, provider, child) {
+        // --- Loading State (while AI processes) ---
+        if (provider.isLoading) {
+          return Scaffold(
+            body: Container(
+              decoration: const BoxDecoration(
+                gradient: AppTheme.backgroundGradient,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('🧠', style: TextStyle(fontSize: 64))
+                        .animate(onPlay: (c) => c.repeat())
+                        .scaleXY(
+                          begin: 0.8,
+                          end: 1.1,
+                          duration: 800.ms,
+                          curve: Curves.easeInOut,
+                        ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'AI is analyzing your\npersonality...',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                      textAlign: TextAlign.center,
+                    ).animate().fadeIn(duration: 500.ms),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Finding your perfect track',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                    ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+                    const SizedBox(height: 32),
+                    const SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryColor,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         final result = provider.result;
 
         if (result == null) {
@@ -275,6 +328,8 @@ class PersonalityResultScreen extends StatelessWidget {
 
   Widget _buildExploreTrackButton(
       BuildContext context, PersonalityProvider provider) {
+    final trackName = provider.result?.trackName ?? 'Development';
+
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -296,7 +351,7 @@ class PersonalityResultScreen extends StatelessWidget {
               context,
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
-                    const TrackVibeScreen(),
+                    TrackVibeScreen(trackName: trackName),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                   return SlideTransition(
@@ -315,9 +370,9 @@ class PersonalityResultScreen extends StatelessWidget {
             );
           },
           icon: const Icon(Icons.explore_rounded, size: 22),
-          label: const Text(
-            'Explore Frontend Dev Vibe',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          label: Text(
+            'Explore $trackName Vibe',
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,

@@ -6,6 +6,7 @@
 ///   2. Track Vibe — explore the frontend dev lifestyle
 ///   3. Career Analysis — skill gap analysis with mock data
 /// ====================================================================
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
