@@ -45,13 +45,13 @@ app.*.map.json
 /android/app/release
 
 # Backend — Node.js
-lib/backend/node_modules/
-lib/backend/.env
-lib/backend/package-lock.json
+backend/node_modules/
+backend/.env
+backend/package-lock.json
 
-# Backend — Python Data Service
-lib/data_service/venv/
-lib/data_service/__pycache__/
+# Data Analysis — Python Data Service
+data_analysis/venv/
+data_analysis/__pycache__/
 *.pyc
 
 # Environment files (keep .env.example tracked)

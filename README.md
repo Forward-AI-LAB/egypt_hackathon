@@ -102,32 +102,51 @@ Forward AI is a data-driven career pathing platform built as a **microservices a
 
 ---
 
+## 👥 Team Directory Guide
+
+| Team | Directory | Tech | Quick Start |
+|------|-----------|------|-------------|
+| 🟢 **Backend** | [`backend/`](backend/) | Node.js, Express | `cd backend && npm install && node server.js` |
+| 🔵 **Data Analysis** | [`data_analysis/`](data_analysis/) | Python, Flask, KeyBERT | `cd data_analysis && pip install -r requirements.txt && python data_service.py` |
+| 🟠 **Frontend** | [`lib/`](lib/) | Flutter, Dart | `flutter pub get && flutter run` |
+
+> Each team directory has its own **README.md** with detailed setup instructions.
+
+---
+
 ## 📁 Project Structure
 
 ```
 egypt_hackathon/
-├── lib/
-│   ├── main.dart                      # App entry point & Provider setup
+├── backend/                           # 🟢 BACKEND TEAM
+│   ├── server.js                      #    Node.js Express orchestration server
+│   ├── package.json                   #    Node.js dependencies
+│   ├── .env.example                   #    Environment variable template
+│   └── README.md                      #    Backend setup guide
+│
+├── data_analysis/                     # 🔵 DATA ANALYSIS TEAM
+│   ├── data_service.py                #    Python Flask NLP microservice
+│   ├── requirements.txt               #    Python dependencies
+│   └── README.md                      #    Data analysis setup guide
+│
+├── lib/                               # 🟠 FRONTEND TEAM (Flutter/Dart)
+│   ├── main.dart                      #    App entry point & Provider setup
 │   ├── config/
-│   │   └── theme.dart                 # Material 3 dark theme & color palette
+│   │   └── theme.dart                 #    Material 3 dark theme & color palette
 │   ├── models/
-│   │   └── analysis_result.dart       # Data models (AnalysisResult, RoadmapWeek)
+│   │   └── analysis_result.dart       #    Data models (AnalysisResult, RoadmapWeek)
 │   ├── providers/
-│   │   └── analysis_provider.dart     # State management (ChangeNotifier)
+│   │   └── analysis_provider.dart     #    State management (ChangeNotifier)
 │   ├── services/
-│   │   └── api_service.dart           # HTTP client (Dio) for backend calls
-│   ├── screens/
-│   │   ├── home_screen.dart           # Input screen (job title + skills)
-│   │   └── result_screen.dart         # Results display (gaps + roadmap)
-│   ├── backend/
-│   │   ├── server.js                  # Node.js Express orchestration server
-│   │   └── package.json               # Node.js dependencies
-│   └── data_service/
-│       ├── data_service.py            # Python Flask NLP microservice
-│       └── requirements.txt           # Python dependencies
-├── pubspec.yaml                       # Flutter project configuration
-├── analysis_options.yaml              # Dart linting rules
-└── README.md                          # This file
+│   │   └── api_service.dart           #    HTTP client (Dio) for backend calls
+│   └── screens/
+│       ├── home_screen.dart           #    Input screen (job title + skills)
+│       └── result_screen.dart         #    Results display (gaps + roadmap)
+│
+├── test/                              #    Flutter widget tests
+├── pubspec.yaml                       #    Flutter project configuration
+├── analysis_options.yaml              #    Dart linting rules
+└── README.md                          #    This file
 ```
 
 ---
@@ -152,10 +171,10 @@ cd egypt_hackathon
 
 ### 2. Set Up Environment Variables
 
-Create a `.env` file inside `lib/backend/`:
+Create a `.env` file inside `backend/`:
 
 ```bash
-cp lib/backend/.env.example lib/backend/.env
+cp backend/.env.example backend/.env
 ```
 
 Fill in your API keys:
@@ -178,7 +197,7 @@ PYTHON_SERVICE_URL=http://localhost:5001
 ### 3. Start the Python Data Service
 
 ```bash
-cd lib/data_service
+cd data_analysis
 
 # Create a virtual environment (recommended)
 python -m venv venv
@@ -196,13 +215,13 @@ The Python service starts on `http://localhost:5001`.
 ### 4. Start the Node.js Backend
 
 ```bash
-cd lib/backend
+cd backend
 
 # Install dependencies
 npm install
 
 # Start the server
-npm start
+node server.js
 ```
 
 The Node.js backend starts on `http://localhost:3000`.
